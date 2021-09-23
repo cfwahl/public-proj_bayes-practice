@@ -31,7 +31,6 @@ para <- c("b",
 m <- read.jagsfile("model.R")
 
 ## mcmc setup ####
-
 n_ad <- 100
 n_iter <- 1.0E+4
 n_thin <- max(3, ceiling(n_iter / 500))
