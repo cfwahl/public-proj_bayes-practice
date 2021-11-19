@@ -74,18 +74,3 @@ mcmc_summary
 
 library(mcmcOutput)
 mcmcOutput::diagPlot(post)
-
-# convert to mcmcOutput and do nice plots of marginal probabilities
-salB <- mcmcOutput(post, default='psi')
-plot(salB)
-
-MCMCtrace(post$mcmc, 
-          params = 'aplha\\[1\\]',
-          ISB = FALSE,
-          pdf = FALSE)
-
-#MCMCvis::MCMCtrace(mcmc_summary)
-#MCMCplot(mcmc_summary)
-
-#MCMCplot(object = mcmc_summary, object2 = MCMC_data2,
-#         params = 'beta', rank = TRUE, offset = 0.14)
