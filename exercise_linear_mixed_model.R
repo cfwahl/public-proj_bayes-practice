@@ -1,16 +1,8 @@
 
-########  Linear Mixed Model  ###############
-
 # Load packages
-library(lattice)
 library(runjags)
 library(tidyverse)
 library(MCMCvis) 
-
-# make sure JAGS is talking to R
-testjags()
-
-setwd("C:/....")
 
 # dataset
 attach(iris)
@@ -25,32 +17,24 @@ x3 <- iris$Species
 # explanatory: X would be Sepal.Width and Petal.Length, species random variable
 # use half student_t distribution for priors of sds
 
-n.species <- 3				# Number of species
-n.sample <- 50				# Number of samples in each pop
-n <- n.species * n.sample 		# Total number of data points
-
+n <- nrow(iris)
 
 # jags --------------------------------------------------------------------
 
 ## data ####
 # 
-d_jags <- list(y = y,
-               x3 = as.numeric(x3), 
+d_jags <- list(y = iris$Sepal.Length,
                x1 = x1,
                x2 = x2,
-               n = n)
+               x3 = as.numeric(x3), 
+               n = n,
+               W = diag(3))
 
 
 ## parameters ####
-para <- c("alpha",
-          "beta",
-          "mu.int",
-          "sigma.int",
-          "mu.slope", 
-          "sigma.slope",
-          "rho",
-          "covariance",
-          "sigma")
+para <- c("beta",
+          "sigma",
+          "Sigma.beta")
 
 
 ## model file ####
@@ -66,13 +50,7 @@ n_sample <- ceiling(n_iter / n_thin)
 # These were changed for this example. Added alpha, beta, sigma to Akiras code
 inits <- replicate(3,
                    list(.RNG.name = "base::Mersenne-Twister",
-                        .RNG.seed = NA, 
-                        mu.int = rnorm(1, 0, 1),
-                        sigma.int = rlnorm(1), 
-                        mu.slope = rnorm(1, 0, 1),
-                        sigma.slope = rlnorm(1),
-                        rho = runif(1, -1, 1),
-                        sigma = rlnorm(1)),
+                        .RNG.seed = NA),
                    simplify = FALSE)
 
 

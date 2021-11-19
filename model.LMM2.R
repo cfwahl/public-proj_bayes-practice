@@ -2,32 +2,23 @@ model {
   
   # Priors
   for (j in 1:3){
-    alpha[j] <- B[j,1]
-    beta[j] <- B[j,2]
-    B[j,1:2] ~ dmnorm(B.hat[j,], Tau.B[,])
-    B.hat[j,1] <- mu.int
-    B.hat[j,2] <- mu.slope
+    beta[j, 1:3] ~ dmnorm(beta.hat[], Tau.beta[,])
   }
   
-  mu.int ~ dnorm(0, 0.001)		# Hyperpriors for random intercepts
-  mu.slope ~ dnorm(0, 0.001)		# Hyperpriors for random slopes
+  for(i in 1:3) {
+    beta.hat[i] ~ dnorm(0, 0.001)
+  }
   
-  Tau.B[1:2,1:2] <- inverse(Sigma.B[,])
-  Sigma.B[1,1] <- pow(sigma.int,2)
-  sigma.int ~ dunif(0, 100)		# SD of intercepts
-  Sigma.B[2,2] <- pow(sigma.slope,2)
-  sigma.slope ~ dunif(0, 100)		# SD of slopes
-  Sigma.B[1,2] <- rho*sigma.int*sigma.slope
-  Sigma.B[2,1] <- Sigma.B[1,2]
-  rho ~ dunif(-1,1)
-  covariance <- Sigma.B[1,2]
+  Tau.beta[1:3,1:3] ~ dwish(W[,], 4)
+  Sigma.beta[1:3, 1:3] <- inverse(Tau.beta[,])
   
-  tau <- 1 / ( sigma * sigma)		# Residual
-  sigma ~ dunif(0, 100)			# Residual standard deviation
+  tau ~ dscaled.gamma(2.5, 3)
+  sigma <- sqrt(1 / tau)
   
   # Likelihood
   for (i in 1:n) {
     y[i] ~ dnorm(mu[i], tau)		# The 'residual' random variable
-    mu[i] <- alpha[x3[i]] + beta[x3[i]]*x1[i] + beta[x3[i]]*x2[i]  # Expectation
+    mu[i] <- beta[x3[i], 1] + beta[x3[i], 2]*x1[i] + beta[x3[i], 3]*x2[i]  # Expectation
   }
+  
 }
