@@ -24,29 +24,28 @@ elv <- data$elevationmean
 
 ## data ####
 # 
-d_jags <- list(y = y,
+d_jags <- list(N = length(y), 
+               y = y,
                agr = agr,
-               elv = elv,
-               n = length(y))
+               elv = elv)
 
 d_jags # check to make sure its correct
 str(d_jags)
 
 ## parameters ####
-para <- c("alpha",
-          "beta1",
-          "beta2",
-          "mean.theta")
+para <- c("p0",
+          "bagr",
+          "belv")
 
 ## model file ####
-m <- read.jagsfile("code/model_occupancy_ts.R")
+m <- read.jagsfile("code/model_binomial_glm.R")
 
 ## mcmc setup ####
 n_ad <- 100 
 n_iter <- 1.0E+4 #number of draws
 n_thin <- max(3, ceiling(n_iter / 500)) #number of thins
 n_burn <- ceiling(max(10, n_iter/2)) # number of draws to burn
-n_sample <- 10000
+n_sample <- 1000
 
 inits <- replicate(3,
                    list(.RNG.name = "base::Mersenne-Twister",
@@ -83,6 +82,4 @@ occ_post <- mcmcOutput(post, default='psi')
 plot(occ_post)
 
 # Get frequentist MLEs for comparison
-summary(glm(y ~ agr + elv, family=binomial(link = "logit")))
-
-        
+summary(glm(y ~ agr + elv, family='binomial'))
