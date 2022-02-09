@@ -2,9 +2,8 @@ model{
   
   # Likelihood
   for(i in 1:N) {
-    logit(p[i]) <- b0 + bagr * agr[i] + 
-      belv * elv[i]
     y[i] ~ dbern(p[i])
+    logit(p[i]) <- b0 + bagr * agr[i] + belv * elv[i]
   }
   
   # Priors

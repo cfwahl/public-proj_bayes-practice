@@ -1,6 +1,8 @@
 
-
 # setup --------------------------------------------------------------------
+
+# clean objects
+rm(list = ls())
 
 # Load packages
 pacman::p_load(runjags,
@@ -9,33 +11,53 @@ pacman::p_load(runjags,
                mcmcOutput)
 
 # Read in the data
-data <- read_csv("data_raw/MN_TS_occurance_watershed_stats.csv")
+data_dmat <- read_csv("data_raw/siteXdist_ws1.csv")
+names(data_dmat) <- c("segment_id", paste0("j", 1:11))
+
+data_dmat <- data_dmat %>% 
+  mutate(segment_id = str_remove(segment_id, "X"),
+         segment_id = as.numeric(segment_id))
+
+segment_set <- unique(data_dmat$segment_id)
+
+data_dmat <- data_dmat %>% 
+  mutate(segment_id = as.numeric(as.factor(segment_id)))
+
+data <- read_csv("data_raw/MN_TS_occurance_watershed_stats.csv") %>% 
+  filter(segment %in% segment_set) %>% 
+  mutate(segment_id = as.numeric(as.factor(segment)))
+
 str(data)
 
 # assign variables
-y <- data$occurrence
-agr <- data$frac_agri
-elv <- data$elevationmean
+# capitalize "data" in Jags codes to distinguish from parameters
+Y <- data$occurrence
+Agr <- c(scale(data$frac_agri))
+Elv <- c(scale(data$elevationmean))
+M <- dplyr::select(data_dmat, -segment_id)
+Segment_id <- data$segment_id
 
 # jags --------------------------------------------------------------------
 
 ## data ####
-# 
-d_jags <- list(N = length(y), 
-               y = y,
-               agr = agr,
-               elv = elv)
+d_jags <- list(Y = Y,
+               Agr = Agr,
+               Elv = Elv,
+               M = data.matrix(M),
+               Segment_id = Segment_id,
+               N_sample = length(Y),
+               N_site = nrow(M))
 
 d_jags # check to make sure its correct
 str(d_jags)
 
 ## parameters ####
-para <- c("p0",
-          "bagr",
-          "belv")
+para <- c("alpha",
+          "beta",
+          "s")
 
 ## model file ####
-m <- read.jagsfile("code/model_occupancy_ts2.R")
+m <- read.jagsfile("code/model_occupancy_ts3.R")
 
 ## mcmc setup ####
 n_ad <- 100 
@@ -67,16 +89,6 @@ post <- run.jags(m$model,
                  module = "glm")
 
 # summarize outputs
-post
-
 mcmc_summary <- MCMCsummary(post$mcmc)  
 mcmc_summary   # Bayesian analysis
 
-diagPlot(post)
-
-# convert to mcmcOutput for plots of marginal probabilities
-occ_post <- mcmcOutput(post, default='psi')
-plot(occ_post)
-
-# Get frequentist MLEs for comparison
-summary(glm(y ~ agr + elv, family='binomial'))
